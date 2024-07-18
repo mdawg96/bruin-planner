@@ -1,7 +1,7 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect, url_for
 import os
 from dotenv import load_dotenv
-from backend.db import User, Database  # Update this import
+from db import User, Database
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -14,17 +14,23 @@ database = Database(mongo_uri)
 
 MAX_REGISTRATIONS_PER_DAY = 3
 
-@app.route('/login/', methods=['POST'])
-def login():
-    try:
-        username = request.json['username']
-        password = request.json['password']
-        user = database.get_user(username)
-        if user and user.password == password:
-            return {"auth": "success"}
-        return {"auth": "failure"}
-    except Exception as e:
-        return {"auth": "failure"}
+@app.route('/')
+def home():
+    return redirect(url_for('login_page'))
+
+@app.route('/login/', methods=['GET', 'POST'])
+def login_page():
+    if request.method == 'POST':
+        try:
+            username = request.json['username']
+            password = request.json['password']
+            user = database.get_user(username)
+            if user and user.password == password:
+                return {"auth": "success"}
+            return {"auth": "failure"}
+        except Exception as e:
+            return {"auth": "failure"}
+    return "Login Page"  # Replace this with the HTML content for your login page
 
 @app.route('/create_an_account/', methods=['POST'])
 def create_an_account():
