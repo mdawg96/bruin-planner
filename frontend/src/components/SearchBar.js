@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import TerryIcon from './terry.png'; 
-import JzIcon from './jz.png'; 
-import PjIcon from './pj.png'; 
+import TerryIcon from './terry.png';
+import JzIcon from './jz.png';
+import PjIcon from './pj.png';
 
 const icons = [TerryIcon, JzIcon, PjIcon];
 
@@ -46,7 +46,7 @@ const SearchBar = ({ username, classesData }) => {
         return;
       }
       try {
-        const response = await axios.post('https://mdawg96.github.io/bruin-planner/getUserClasses/', { username: storedUsername });
+        const response = await axios.post('https://bruin-planner.herokuapp.com/getUserClasses/', { username: storedUsername });
         if (response.data) {
           const data = response.data;
           if (data.selected_classes) {
@@ -102,7 +102,7 @@ const SearchBar = ({ username, classesData }) => {
       setSelectedClasses(updatedSelectedClasses);
       setDraggedFromZone(null);
       try {
-        await axios.post('https://mdawg96.github.io/bruin-planner/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
+        await axios.post('https://bruin-planner.herokuapp.com/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
       } catch (error) {
         console.error('Error updating selected classes:', error);
       }
@@ -132,7 +132,7 @@ const SearchBar = ({ username, classesData }) => {
       setSelectedClasses(updatedSelectedClasses);
       setDraggedFromZone(null);
       try {
-        await axios.post('https://mdawg96.github.io/bruin-planner/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
+        await axios.post('https://bruin-planner.herokuapp.com/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
       } catch (error) {
         console.error('Error updating selected classes after dropping outside:', error);
       }
@@ -346,7 +346,7 @@ const SearchBar = ({ username, classesData }) => {
     });
 
     try {
-      await axios.post('https://mdawg96.github.io/bruin-planner/updateUserClasses/', { username, selected_classes: selectedClasses, custom_options: updatedOptions });
+      await axios.post('https://bruin-planner.herokuapp.com/updateUserClasses/', { username, selected_classes: selectedClasses, custom_options: updatedOptions });
     } catch (error) {
       console.error('Error updating custom options:', error);
     }

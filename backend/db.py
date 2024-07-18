@@ -1,61 +1,78 @@
-import datetime
-from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
+from flask import Flask, request, jsonify
+import os
+from dotenv import load_dotenv
+from backend.db import User, Database  # updated import
+from flask_cors import CORS
 
-class User:
-    def __init__(self, username, password, selected_classes=None, custom_options=None):
-        self.username = username
-        self.password = password
-        self.selected_classes = selected_classes if selected_classes is not None else []
-        self.custom_options = custom_options if custom_options is not None else []
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "https://mdawg96.github.io"}})
+app.config['CORS_HEADERS'] = 'Content-Type'
 
-    def to_dict(self):
-        return {
-            "username": self.username,
-            "password": self.password,
-            "selected_classes": self.selected_classes,
-            "custom_options": self.custom_options
-        }
+load_dotenv()
+mongo_uri = os.getenv("MONGO_URI")
+database = Database(mongo_uri)
 
-class Database:
-    def __init__(self, uri):
-        self.client = MongoClient(uri, server_api=ServerApi('1'))
-        self.db = self.client['cluster0']
-        self.users = self.db['users']
-        self.registration_attempts = self.db['registration_attempts']
+MAX_REGISTRATIONS_PER_DAY = 3
 
-    def get_user(self, username):
-        user_data = self.users.find_one({"username": username})
-        if user_data:
-            return User(
-                username=user_data['username'],
-                password=user_data['password'],
-                selected_classes=user_data.get('selected_classes', []),
-                custom_options=user_data.get('custom_options', [])
-            )
-        return None
+@app.route('/login/', methods=['POST'])
+def login():
+    try:
+        username = request.json['username']
+        password = request.json['password']
+        user = database.get_user(username)
+        if user and user.password == password:
+            return {"auth": "success"}
+        return {"auth": "failure"}
+    except Exception as e:
+        return {"auth": "failure"}
 
-    def add_user(self, user):
-        if self.get_user(user.username):
-            return False  # User already exists
-        self.users.insert_one(user.to_dict())
-        return True
+@app.route('/create_an_account/', methods=['POST'])
+def create_an_account():
+    try:
+        ip_address = request.remote_addr
+        registration_count = database.count_registration_attempts(ip_address)
+        if registration_count >= MAX_REGISTRATIONS_PER_DAY:
+            return {"status": "failure", "message": "Please try again tomorrow"}
 
-    def update_user_classes(self, username, selected_classes, custom_options):
-        self.users.update_one(
-            {"username": username},
-            {"$set": {"selected_classes": selected_classes, "custom_options": custom_options}}
-        )
+        username = request.json['username']
+        password = request.json['password']
+        
+        if database.add_user(User(username, password)):
+            database.record_registration_attempt(ip_address)
+            return {"status": "success"}
+        return {"status": "failure", "message": "User already exists."}
+    except KeyError:
+        return {"status": "failure", "message": "Username or password not provided."}
+    except Exception as e:
+        return {"status": "failure", "message": str(e)}
 
-    def record_registration_attempt(self, ip_address):
-        self.registration_attempts.insert_one({
-            "ip_address": ip_address,
-            "timestamp": datetime.datetime.now()
-        })
+@app.route('/getUserClasses/', methods=['POST'])
+def get_user_classes():
+    try:
+        username = request.json['username']
+        user = database.get_user(username)
+        if user:
+            return jsonify({
+                "selected_classes": user.selected_classes,
+                "custom_options": user.custom_options
+            })
+        return jsonify({"status": "failure", "message": "User not found"})
+    except Exception as e:
+        return jsonify({"status": "failure", "message": str(e)})
 
-    def count_registration_attempts(self, ip_address):
-        today = datetime.datetime.now().date()
-        return self.registration_attempts.count_documents({
-            "ip_address": ip_address,
-            "timestamp": {"$gte": datetime.datetime(today.year, today.month, today.day)}
-        })
+@app.route('/updateUserClasses/', methods=['POST'])
+def update_user_classes():
+    try:
+        username = request.json['username']
+        selected_classes = request.json['selected_classes']
+        custom_options = request.json['custom_options']
+        user = database.get_user(username)
+        if not user:
+            return {"status": "failure", "message": "User not found"}
+        database.update_user_classes(username, selected_classes, custom_options)
+        return {"status": "success"}
+    except Exception as e:
+        return {"status": "failure", "message": str(e)}
+
+if __name__ == '__main__':
+    app.run()
