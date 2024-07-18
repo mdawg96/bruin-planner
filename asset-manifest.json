@@ -1,0 +1,17 @@
+{
+  "files": {
+    "main.css": "/bruin-planner/static/css/main.1a7488ce.css",
+    "main.js": "/bruin-planner/static/js/main.e10f9abe.js",
+    "static/media/logo2.jpeg": "/bruin-planner/static/media/logo2.b42f0999aec949eb45de.jpeg",
+    "static/media/terry.png": "/bruin-planner/static/media/terry.d3b68f8fe1bc216db0c4.png",
+    "static/media/pj.png": "/bruin-planner/static/media/pj.617b359051f49c7ef620.png",
+    "static/media/jz.png": "/bruin-planner/static/media/jz.b05d9946dccee153768a.png",
+    "index.html": "/bruin-planner/index.html",
+    "main.1a7488ce.css.map": "/bruin-planner/static/css/main.1a7488ce.css.map",
+    "main.e10f9abe.js.map": "/bruin-planner/static/js/main.e10f9abe.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.1a7488ce.css",
+    "static/js/main.e10f9abe.js"
+  ]
+}
