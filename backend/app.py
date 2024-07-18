@@ -5,14 +5,14 @@ from db import User, Database
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+CORS(app, resources={r"/*": {"origins": "https://mdawg96.github.io"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 load_dotenv()
 mongo_uri = os.getenv("MONGO_URI")
 database = Database(mongo_uri)
 
-MAX_REGISTRATIONS_PER_DAY = 100
+MAX_REGISTRATIONS_PER_DAY = 3
 
 @app.route('/login/', methods=['POST'])
 def login():
@@ -22,10 +22,8 @@ def login():
         user = database.get_user(username)
         if user and user.password == password:
             return {"auth": "success"}
-        else:
-            return {"auth": "failure"}
+        return {"auth": "failure"}
     except Exception as e:
-        print("Error during login:", e)
         return {"auth": "failure"}
 
 @app.route('/create_an_account/', methods=['POST'])
@@ -42,12 +40,10 @@ def create_an_account():
         if database.add_user(User(username, password)):
             database.record_registration_attempt(ip_address)
             return {"status": "success"}
-        else:
-            return {"status": "failure", "message": "User already exists."}
+        return {"status": "failure", "message": "User already exists."}
     except KeyError:
         return {"status": "failure", "message": "Username or password not provided."}
     except Exception as e:
-        print("Error during registration:", e)
         return {"status": "failure", "message": str(e)}
 
 @app.route('/getUserClasses/', methods=['POST'])
@@ -60,10 +56,8 @@ def get_user_classes():
                 "selected_classes": user.selected_classes,
                 "custom_options": user.custom_options
             })
-        else:
-            return jsonify({"status": "failure", "message": "User not found"})
+        return jsonify({"status": "failure", "message": "User not found"})
     except Exception as e:
-        print("Error fetching user classes:", e)
         return jsonify({"status": "failure", "message": str(e)})
 
 @app.route('/updateUserClasses/', methods=['POST'])
@@ -78,7 +72,6 @@ def update_user_classes():
         database.update_user_classes(username, selected_classes, custom_options)
         return {"status": "success"}
     except Exception as e:
-        print("Error updating user classes:", e)
         return {"status": "failure", "message": str(e)}
 
 if __name__ == '__main__':
