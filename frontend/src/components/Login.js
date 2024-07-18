@@ -13,7 +13,7 @@ const Login = ({ setUsername }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('https://mdawg96.github.io/bruin-planner/login/', { username, password });
+      const response = await axios.post('https://bruin-planner-fb8f6f96ea51.herokuapp.com/login/', { username, password });
       if (response.data.auth === 'success') {
         setUsername(username);
         localStorage.setItem('username', username);
@@ -29,7 +29,7 @@ const Login = ({ setUsername }) => {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('https://mdawg96.github.io/bruin-planner/create_an_account/', { username, password }, {
+      const response = await axios.post('https://bruin-planner-fb8f6f96ea51.herokuapp.com/create_an_account/', { username, password }, {
         headers: {
           'Content-Type': 'application/json'
         }
