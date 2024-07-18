@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from db import User, Database
 from flask_cors import CORS
 
-app = Flask(__name__, static_folder='../frontend/build', static_url_path='/')
+app = Flask(__name__, static_folder='../frontend/build', static_url_path='')
 CORS(app, resources={r"/*": {"origins": "https://bruin-planner-fb8f6f96ea51.herokuapp.com"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
@@ -80,7 +80,7 @@ def update_user_classes():
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_react_app(path):
-    if path and os.path.exists(os.path.join(app.static_folder, path)):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')
