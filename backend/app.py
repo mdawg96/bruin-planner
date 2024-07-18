@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import os
 from dotenv import load_dotenv
-from db import User, Database
+from backend.db import User, Database  # Update this import
 from flask_cors import CORS
 
 app = Flask(__name__)
