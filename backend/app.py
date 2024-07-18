@@ -1,11 +1,11 @@
-from flask import Flask, request, jsonify, redirect, url_for
+from flask import Flask, request, jsonify, send_from_directory
 import os
 from dotenv import load_dotenv
 from db import User, Database
 from flask_cors import CORS
 
-app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "https://mdawg96.github.io"}})
+app = Flask(__name__, static_folder='../frontend/build', static_url_path='/')
+CORS(app, resources={r"/*": {"origins": "https://bruin-planner-fb8f6f96ea51.herokuapp.com"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 load_dotenv()
@@ -13,10 +13,6 @@ mongo_uri = os.getenv("MONGO_URI")
 database = Database(mongo_uri)
 
 MAX_REGISTRATIONS_PER_DAY = 3
-
-@app.route('/')
-def home():
-    return redirect(url_for('login_page'))
 
 @app.route('/login/', methods=['GET', 'POST'])
 def login_page():
@@ -30,7 +26,7 @@ def login_page():
             return {"auth": "failure"}
         except Exception as e:
             return {"auth": "failure"}
-    return "Login Page"  # Replace this with the HTML content for your login page
+    return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/create_an_account/', methods=['POST'])
 def create_an_account():
@@ -79,6 +75,15 @@ def update_user_classes():
         return {"status": "success"}
     except Exception as e:
         return {"status": "failure", "message": str(e)}
+
+# Serve React frontend
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react_app(path):
+    if path and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
     app.run()
