@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import './App.css';
 import MainHeader from './components/MainHeader';
 import TopStrip from './components/TopStrip';
 import Login from './components/Login';
 import About from './components/About';
 import Planner from './components/Planner';
+import './App.css';
 
 function App() {
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = React.useState('');
 
   return (
     <Router>
