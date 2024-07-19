@@ -47,7 +47,7 @@ const SearchBar = ({ username, classesData }) => {
       }
       try {
         console.log('Fetching user data for:', storedUsername);
-        const response = await axios.post('https://bruin-planner.herokuapp.com/getUserClasses/', { username: storedUsername });
+        const response = await axios.post('https://bruin-planner-fb8f6f96ea51.herokuapp.com/getUserClasses/', { username: storedUsername });
         console.log('User data response:', response.data);
         if (response.data) {
           const data = response.data;
@@ -106,7 +106,7 @@ const SearchBar = ({ username, classesData }) => {
       setSelectedClasses(updatedSelectedClasses);
       setDraggedFromZone(null);
       try {
-        const response = await axios.post('https://bruin-planner.herokuapp.com/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
+        const response = await axios.post('https://bruin-planner-fb8f6f96ea51.herokuapp.com/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
         console.log('Update user classes response:', response.data);
       } catch (error) {
         console.error('Error updating selected classes:', error);
@@ -138,7 +138,7 @@ const SearchBar = ({ username, classesData }) => {
       setSelectedClasses(updatedSelectedClasses);
       setDraggedFromZone(null);
       try {
-        const response = await axios.post('https://bruin-planner.herokuapp.com/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
+        const response = await axios.post('https://bruin-planner-fb8f6f96ea51.herokuapp.com/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
         console.log('Update user classes after dropping outside response:', response.data);
       } catch (error) {
         console.error('Error updating selected classes after dropping outside:', error);
@@ -353,7 +353,7 @@ const SearchBar = ({ username, classesData }) => {
     });
 
     try {
-      const response = await axios.post('https://bruin-planner.herokuapp.com/updateUserClasses/', { username, selected_classes: selectedClasses, custom_options: updatedOptions });
+      const response = await axios.post('https://bruin-planner-fb8f6f96ea51.herokuapp.com/updateUserClasses/', { username, selected_classes: selectedClasses, custom_options: updatedOptions });
       console.log('Update custom options response:', response.data);
     } catch (error) {
       console.error('Error updating custom options:', error);
