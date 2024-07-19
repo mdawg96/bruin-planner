@@ -1,115 +1,337 @@
-from flask import Flask, request, jsonify, send_from_directory
-import os
-from dotenv import load_dotenv
-from db import User, Database
-from flask_cors import CORS  # Import Flask-CORS
-import logging
-import time
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import TerryIcon from './terry.png';
+import JzIcon from './jz.png';
+import PjIcon from './pj.png';
 
-app = Flask(__name__, static_folder='../frontend/build', static_url_path='')
-CORS(app, resources={r"/*": {"origins": "https://bruin-planner-fb8f6f96ea51.herokuapp.com"}})  # Configure CORS
-app.config['CORS_HEADERS'] = 'Content-Type'
+const icons = [TerryIcon, JzIcon, PjIcon];
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
+const generateColor = (() => {
+  const subjectColorMap = {};
+  const colors = [
+    '#ffcccc', '#ccffcc', '#ccccff', '#ffccff', '#ccffff',
+    '#ffc0cb', '#add8e6', '#90ee90', '#dda0dd', '#ffb6c1', '#ffa07a'
+  ];
+  let colorIndex = 0;
 
-# Load environment variables
-load_dotenv()
-mongo_uri = os.getenv("MONGO_URI")
-database = Database(mongo_uri)
+  return (subject) => {
+    if (!subjectColorMap[subject]) {
+      subjectColorMap[subject] = colors[colorIndex % colors.length];
+      colorIndex++;
+    }
+    return subjectColorMap[subject];
+  };
+})();
 
-MAX_REGISTRATIONS_PER_DAY = 3
+const SearchBar = ({ username, classesData }) => {
+  const [query, setQuery] = useState('');
+  const [selectedClasses, setSelectedClasses] = useState({});
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [draggedFromZone, setDraggedFromZone] = useState(null);
+  const [isDraggingOut, setIsDraggingOut] = useState(false);
+  const [searchType, setSearchType] = useState('All');
+  const [subject, setSubject] = useState('');
+  const [showInfo, setShowInfo] = useState(null);
+  const [infoContent, setInfoContent] = useState({ subject: '', className: '', units: '', description: '' });
+  const [infoBoxPosition, setInfoBoxPosition] = useState({ top: 100, left: 100 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [customOptions, setCustomOptions] = useState([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-@app.route('/login/', methods=['GET', 'POST'])
-def login_page():
-    if request.method == 'POST':
-        try:
-            username = request.json['username']
-            password = request.json['password']
-            user = database.get_user(username)
-            if user and user.password == password:
-                return {"auth": "success"}
-            return {"auth": "failure"}
-        except Exception as e:
-            logging.error(f"Error during login: {str(e)}")
-            return {"auth": "failure"}
-    return send_from_directory(app.static_folder, 'index.html')
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const storedUsername = username || localStorage.getItem('username');
+      if (!storedUsername) {
+        return;
+      }
+      try {
+        const response = await axios.post('https://bruin-planner.herokuapp.com/getUserClasses/', { username: storedUsername });
+        if (response.data) {
+          const data = response.data;
+          if (data.selected_classes) {
+            const updatedClasses = {};
+            Object.keys(data.selected_classes).forEach(key => {
+              updatedClasses[key] = Array.isArray(data.selected_classes[key]) ? data.selected_classes[key] : [];
+            });
+            setSelectedClasses(updatedClasses);
+          }
+          if (data.custom_options) {
+            setCustomOptions(data.custom_options);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user details:', error);
+      }
+    };
 
-@app.route('/create_an_account/', methods=['POST'])
-def create_an_account():
-    start_time = time.time()
-    try:
-        ip_address = request.remote_addr
-        logging.debug(f"IP address: {ip_address}")
+    fetchUserData();
+  }, [username]);
 
-        registration_count = database.count_registration_attempts(ip_address)
-        logging.debug(f"Registration count for IP {ip_address}: {registration_count}")
+  useEffect(() => {
+    if (classesData && Object.keys(classesData).length > 0 && !subject) {
+      setSubject(Object.keys(classesData)[0]);
+    }
+  }, [classesData, subject]);
 
-        if registration_count >= MAX_REGISTRATIONS_PER_DAY:
-            logging.warning("Max registrations per day exceeded.")
-            return {"status": "failure", "message": "Please try again tomorrow"}
+  const handleChange = (e) => {
+    setQuery(e.target.value);
+  };
 
-        username = request.json['username']
-        password = request.json['password']
-        
-        logging.debug(f"Received username: {username}")
+  const handleDragStart = (e, item, fromZone = null) => {
+    setDraggedItem(item);
+    setDraggedFromZone(fromZone);
+    setIsDraggingOut(false);
+  };
 
-        if database.add_user(User(username, password)):
-            database.record_registration_attempt(ip_address)
-            logging.info(f"User {username} successfully registered.")
-            return {"status": "success"}
-        
-        logging.warning(f"User {username} already exists.")
-        return {"status": "failure", "message": "User already exists."}
-    except KeyError:
-        logging.error("Username or password not provided")
-        return {"status": "failure", "message": "Username or password not provided."}
-    except Exception as e:
-        logging.error(f"Error during registration: {str(e)}")
-        return {"status": "failure", "message": str(e)}
-    finally:
-        end_time = time.time()
-        logging.debug(f"create_an_account took {end_time - start_time} seconds")
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDraggingOut(true);
+  };
 
-@app.route('/getUserClasses/', methods=['POST'])
-def get_user_classes():
-    try:
-        username = request.json['username']
-        user = database.get_user(username)
-        if user:
-            return jsonify({
-                "selected_classes": user.selected_classes,
-                "custom_options": user.custom_options
-            })
-        return jsonify({"status": "failure", "message": "User not found"})
-    except Exception as e:
-        logging.error(f"Error fetching user classes: {str(e)}")
-        return jsonify({"status": "failure", "message": str(e)})
+  const handleDrop = (e, zone) => {
+    e.preventDefault();
+    if (draggedItem) {
+      const updatedClasses = { ...selectedClasses };
+      if (draggedFromZone) {
+        updatedClasses[draggedFromZone] = updatedClasses[draggedFromZone].filter(
+          (className) => className !== draggedItem
+        );
+      }
+      if (zone !== draggedFromZone) {
+        updatedClasses[zone] = [...(updatedClasses[zone] || []), draggedItem];
+      }
+      setSelectedClasses(updatedClasses);
+      setDraggedItem(null);
+      setDraggedFromZone(null);
+      setIsDraggingOut(false);
+    }
+  };
 
-@app.route('/updateUserClasses/', methods=['POST'])
-def update_user_classes():
-    try:
-        username = request.json['username']
-        selected_classes = request.json['selected_classes']
-        custom_options = request.json['custom_options']
-        user = database.get_user(username)
-        if not user:
-            return {"status": "failure", "message": "User not found"}
-        database.update_user_classes(username, selected_classes, custom_options)
-        logging.info(f"User {username}'s classes updated")
-        return {"status": "success"}
-    except Exception as e:
-        logging.error(f"Error updating user classes: {str(e)}")
-        return {"status": "failure", "message": str(e)}
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+    setDraggedFromZone(null);
+    setIsDraggingOut(false);
+  };
 
-# Serve React frontend
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_react_app(path):
-    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, 'index.html')
+  const handleToggle = (subject, className) => {
+    const updatedClasses = { ...selectedClasses };
+    if (!updatedClasses[subject]) {
+      updatedClasses[subject] = [];
+    }
+    if (updatedClasses[subject].includes(className)) {
+      updatedClasses[subject] = updatedClasses[subject].filter((name) => name !== className);
+    } else {
+      updatedClasses[subject].push(className);
+    }
+    setSelectedClasses(updatedClasses);
+  };
 
-if __name__ == '__main__':
-    app.run(debug=True)  # Enable debug mode for detailed error messages
+  const handleSave = async () => {
+    const storedUsername = username || localStorage.getItem('username');
+    if (!storedUsername) {
+      return;
+    }
+    try {
+      await axios.post('https://bruin-planner.herokuapp.com/updateUserClasses/', {
+        username: storedUsername,
+        selected_classes: selectedClasses,
+        custom_options: customOptions
+      });
+    } catch (error) {
+      console.error('Error saving user classes:', error);
+    }
+  };
+
+  const filteredClasses = query
+    ? classesData[subject]?.filter((className) =>
+        className.toLowerCase().includes(query.toLowerCase())
+      )
+    : classesData[subject];
+
+  const iconSize = 20;
+
+  const containerStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100vh',
+    backgroundColor: '#f0f0f0',
+  };
+
+  const searchBarStyle = {
+    width: '80%',
+    maxWidth: '600px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: '20px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    marginTop: '20px',
+  };
+
+  const inputStyle = {
+    width: '100%',
+    padding: '10px',
+    margin: '10px 0',
+    borderRadius: '5px',
+    border: '1px solid #ccc',
+    fontSize: '1em',
+  };
+
+  const listStyle = {
+    width: '100%',
+    listStyleType: 'none',
+    padding: '0',
+  };
+
+  const listItemStyle = (className) => ({
+    padding: '10px',
+    borderBottom: '1px solid #ddd',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    cursor: 'pointer',
+    backgroundColor: selectedClasses[subject]?.includes(className) ? '#e0f7fa' : '#fff',
+  });
+
+  const buttonStyle = {
+    padding: '10px 20px',
+    fontSize: '1em',
+    cursor: 'pointer',
+    border: 'none',
+    borderRadius: '5px',
+    backgroundColor: '#61dafb',
+    color: '#fff',
+    textDecoration: 'none',
+    textAlign: 'center',
+    transition: 'background-color 0.3s ease',
+    margin: '10px 0',
+  };
+
+  const selectedClassesContainerStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginTop: '20px',
+    width: '80%',
+    maxWidth: '600px',
+  };
+
+  const selectedClassesStyle = {
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: '8px',
+    padding: '20px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+  };
+
+  const selectedClassListStyle = {
+    listStyleType: 'none',
+    padding: '0',
+  };
+
+  const selectedClassItemStyle = (subject, className) => ({
+    padding: '10px',
+    borderBottom: '1px solid #ddd',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: generateColor(subject),
+  });
+
+  const customOptionStyle = {
+    width: '100%',
+    padding: '10px',
+    margin: '10px 0',
+    borderRadius: '5px',
+    border: '1px solid #ccc',
+    fontSize: '1em',
+  };
+
+  const dropdownStyle = {
+    width: '100%',
+    padding: '10px',
+    margin: '10px 0',
+    borderRadius: '5px',
+    border: '1px solid #ccc',
+    fontSize: '1em',
+    cursor: 'pointer',
+  };
+
+  const dropdownItemStyle = {
+    padding: '10px',
+    cursor: 'pointer',
+    borderBottom: '1px solid #ddd',
+  };
+
+  const iconStyle = {
+    marginRight: '10px',
+    width: `${iconSize}px`,
+    height: `${iconSize}px`,
+  };
+
+  return (
+    <div style={containerStyle}>
+      <div style={searchBarStyle}>
+        <input
+          type="text"
+          placeholder="Search classes..."
+          value={query}
+          onChange={handleChange}
+          style={inputStyle}
+        />
+        <ul style={listStyle}>
+          {filteredClasses?.map((className, index) => (
+            <li
+              key={index}
+              style={listItemStyle(className)}
+              draggable
+              onDragStart={(e) => handleDragStart(e, className, subject)}
+              onDragEnd={handleDragEnd}
+              onClick={() => handleToggle(subject, className)}
+            >
+              <span>{className}</span>
+              {selectedClasses[subject]?.includes(className) && (
+                <img src={icons[index % icons.length]} alt="icon" style={iconStyle} />
+              )}
+            </li>
+          ))}
+        </ul>
+        <button onClick={handleSave} style={buttonStyle}>
+          Save
+        </button>
+      </div>
+      <div style={selectedClassesContainerStyle}>
+        <div style={selectedClassesStyle}>
+          <h3>Selected Classes</h3>
+          {Object.keys(selectedClasses).map((subject) => (
+            <div key={subject}>
+              <h4>{subject}</h4>
+              <ul style={selectedClassListStyle}>
+                {selectedClasses[subject].map((className, index) => (
+                  <li
+                    key={index}
+                    style={selectedClassItemStyle(subject, className)}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, className, subject)}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <span>{className}</span>
+                    <img src={icons[index % icons.length]} alt="icon" style={iconStyle} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SearchBar;
