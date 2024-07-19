@@ -3,10 +3,9 @@ import os
 from dotenv import load_dotenv
 from db import User, Database
 from flask_cors import CORS
-from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__, static_folder='../frontend/build', static_url_path='')
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": "https://bruin-planner-fb8f6f96ea51.herokuapp.com"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 load_dotenv()
@@ -19,19 +18,14 @@ MAX_REGISTRATIONS_PER_DAY = 3
 def login_page():
     if request.method == 'POST':
         try:
-            username = request.json.get('username')
-            password = request.json.get('password')
-            
-            if not username or not password:
-                return jsonify({"auth": "failure", "message": "Username and password required"}), 400
-
+            username = request.json['username']
+            password = request.json['password']
             user = database.get_user(username)
-            if user and check_password_hash(user.password, password):
-                return jsonify({"auth": "success"})
-            return jsonify({"auth": "failure", "message": "Invalid credentials"}), 401
+            if user and user.password == password:
+                return {"auth": "success"}
+            return {"auth": "failure"}
         except Exception as e:
-            return jsonify({"auth": "failure", "message": str(e)}), 500
-    
+            return {"auth": "failure"}
     return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/create_an_account/', methods=['POST'])
@@ -40,59 +34,47 @@ def create_an_account():
         ip_address = request.remote_addr
         registration_count = database.count_registration_attempts(ip_address)
         if registration_count >= MAX_REGISTRATIONS_PER_DAY:
-            return jsonify({"status": "failure", "message": "Please try again tomorrow"}), 429
+            return {"status": "failure", "message": "Please try again tomorrow"}
 
-        username = request.json.get('username')
-        password = request.json.get('password')
+        username = request.json['username']
+        password = request.json['password']
         
-        if not username or not password:
-            return jsonify({"status": "failure", "message": "Username and password required"}), 400
-
-        hashed_password = generate_password_hash(password)
-        if database.add_user(User(username, hashed_password)):
+        if database.add_user(User(username, password)):
             database.record_registration_attempt(ip_address)
-            return jsonify({"status": "success"})
-        return jsonify({"status": "failure", "message": "User already exists"}), 409
+            return {"status": "success"}
+        return {"status": "failure", "message": "User already exists."}
     except KeyError:
-        return jsonify({"status": "failure", "message": "Username or password not provided"}), 400
+        return {"status": "failure", "message": "Username or password not provided."}
     except Exception as e:
-        return jsonify({"status": "failure", "message": str(e)}), 500
+        return {"status": "failure", "message": str(e)}
 
 @app.route('/getUserClasses/', methods=['POST'])
 def get_user_classes():
     try:
-        username = request.json.get('username')
-        if not username:
-            return jsonify({"status": "failure", "message": "Username required"}), 400
-        
+        username = request.json['username']
         user = database.get_user(username)
         if user:
             return jsonify({
                 "selected_classes": user.selected_classes,
                 "custom_options": user.custom_options
             })
-        return jsonify({"status": "failure", "message": "User not found"}), 404
+        return jsonify({"status": "failure", "message": "User not found"})
     except Exception as e:
-        return jsonify({"status": "failure", "message": str(e)}), 500
+        return jsonify({"status": "failure", "message": str(e)})
 
 @app.route('/updateUserClasses/', methods=['POST'])
 def update_user_classes():
     try:
-        username = request.json.get('username')
-        selected_classes = request.json.get('selected_classes')
-        custom_options = request.json.get('custom_options')
-        
-        if not username:
-            return jsonify({"status": "failure", "message": "Username required"}), 400
-        
+        username = request.json['username']
+        selected_classes = request.json['selected_classes']
+        custom_options = request.json['custom_options']
         user = database.get_user(username)
         if not user:
-            return jsonify({"status": "failure", "message": "User not found"}), 404
-
+            return {"status": "failure", "message": "User not found"}
         database.update_user_classes(username, selected_classes, custom_options)
-        return jsonify({"status": "success"})
+        return {"status": "success"}
     except Exception as e:
-        return jsonify({"status": "failure", "message": str(e)}), 500
+        return {"status": "failure", "message": str(e)}
 
 # Serve React frontend
 @app.route('/', defaults={'path': ''})
@@ -104,4 +86,4 @@ def serve_react_app(path):
         return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
