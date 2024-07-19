@@ -6,7 +6,7 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__, static_folder='../frontend/build', static_url_path='')
-CORS(app, resources={r"/*": {"origins": "https://bruin-planner-fb8f6f96ea51.herokuapp.com"}})
+CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 load_dotenv()
