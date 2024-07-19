@@ -16,14 +16,13 @@ const Planner = () => {
 
     const fetchClassesData = async () => {
       try {
-        const response = await fetch('https://bruin-planner.herokuapp.com/classes.csv');
+        const response = await fetch('https://bruin-planner-fb8f6f96ea51.herokuapp.com/classes.csv', {
+          mode: 'cors'
+        });
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
-        const reader = response.body.getReader();
-        const result = await reader.read();
-        const decoder = new TextDecoder('utf-8');
-        const csvData = decoder.decode(result.value);
+        const csvData = await response.text();
 
         const parsedData = Papa.parse(csvData, { header: true });
         const classesBySubject = {};
