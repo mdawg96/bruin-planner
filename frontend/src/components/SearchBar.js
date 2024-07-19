@@ -259,7 +259,7 @@ const SearchBar = ({ username, classesData }) => {
   };
 
   const dropZoneStyle = {
-    height: hasSummerClasses ? '230px' : '300px',
+    height: hasSummerClasses ? '130px' : '200px',
     width: '100%',
     border: '2px dashed black',
     display: 'flex',
