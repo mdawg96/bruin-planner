@@ -46,7 +46,9 @@ const SearchBar = ({ username, classesData }) => {
         return;
       }
       try {
+        console.log('Fetching user data for:', storedUsername);
         const response = await axios.post('https://bruin-planner.herokuapp.com/getUserClasses/', { username: storedUsername });
+        console.log('User data response:', response.data);
         if (response.data) {
           const data = response.data;
           if (data.selected_classes) {
@@ -79,6 +81,7 @@ const SearchBar = ({ username, classesData }) => {
   };
 
   const handleDragStart = (e, item, fromZone = null) => {
+    console.log('Drag start:', item, 'from zone:', fromZone);
     setDraggedItem(item);
     setDraggedFromZone(fromZone);
     setIsDraggingOut(false);
@@ -91,6 +94,7 @@ const SearchBar = ({ username, classesData }) => {
   const handleDrop = async (e, toZone) => {
     e.preventDefault();
     if (draggedItem) {
+      console.log('Dropping item:', draggedItem, 'to zone:', toZone);
       const updatedSelectedClasses = { ...selectedClasses };
       if (draggedFromZone) {
         updatedSelectedClasses[draggedFromZone] = updatedSelectedClasses[draggedFromZone].filter(item => item !== draggedItem);
@@ -102,7 +106,8 @@ const SearchBar = ({ username, classesData }) => {
       setSelectedClasses(updatedSelectedClasses);
       setDraggedFromZone(null);
       try {
-        await axios.post('https://bruin-planner.herokuapp.com/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
+        const response = await axios.post('https://bruin-planner.herokuapp.com/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
+        console.log('Update user classes response:', response.data);
       } catch (error) {
         console.error('Error updating selected classes:', error);
       }
@@ -122,6 +127,7 @@ const SearchBar = ({ username, classesData }) => {
   const handleDropOutside = async (e) => {
     e.preventDefault();
     if (isDraggingOut && draggedItem) {
+      console.log('Dropping item outside:', draggedItem);
       const updatedSelectedClasses = { ...selectedClasses };
       Object.keys(updatedSelectedClasses).forEach(zoneKey => {
         if (!Array.isArray(updatedSelectedClasses[zoneKey])) {
@@ -132,7 +138,8 @@ const SearchBar = ({ username, classesData }) => {
       setSelectedClasses(updatedSelectedClasses);
       setDraggedFromZone(null);
       try {
-        await axios.post('https://bruin-planner.herokuapp.com/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
+        const response = await axios.post('https://bruin-planner.herokuapp.com/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
+        console.log('Update user classes after dropping outside response:', response.data);
       } catch (error) {
         console.error('Error updating selected classes after dropping outside:', error);
       }
@@ -346,7 +353,8 @@ const SearchBar = ({ username, classesData }) => {
     });
 
     try {
-      await axios.post('https://bruin-planner.herokuapp.com/updateUserClasses/', { username, selected_classes: selectedClasses, custom_options: updatedOptions });
+      const response = await axios.post('https://bruin-planner.herokuapp.com/updateUserClasses/', { username, selected_classes: selectedClasses, custom_options: updatedOptions });
+      console.log('Update custom options response:', response.data);
     } catch (error) {
       console.error('Error updating custom options:', error);
     }
