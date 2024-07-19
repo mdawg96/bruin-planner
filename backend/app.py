@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, render_template
 from flask_cors import CORS
 import logging
 import os
@@ -73,6 +73,18 @@ def update_user_classes():
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "failure", "message": str(e)})
+
+@app.route('/planner')
+def planner():
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/classes.csv')
+def classes_csv():
+    return send_from_directory(app.static_folder, 'classes.csv')
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(app.static_folder, 'favicon.ico')
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
