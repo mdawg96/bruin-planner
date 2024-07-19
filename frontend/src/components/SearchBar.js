@@ -88,7 +88,7 @@ const SearchBar = ({ username, classesData }) => {
     e.preventDefault();
   };
 
-  const handle = async (e, toZone) => {
+  const handleDrop = async (e, toZone) => {
     e.preventDefault();
     if (draggedItem) {
       const updatedSelectedClasses = { ...selectedClasses };
