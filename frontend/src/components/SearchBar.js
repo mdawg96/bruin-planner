@@ -205,13 +205,13 @@ const SearchBar = ({ username, classesData }) => {
     };
   }, [isDragging, handleMouseMove]);
 
-  const filteredClasses = query ? Object.keys(classesData).reduce((result, subject) => {
+  const filteredClasses = query && classesData ? Object.keys(classesData).reduce((result, subject) => {
     const filtered = classesData[subject].filter((item) => item.className.toLowerCase().includes(query.toLowerCase()));
     if (filtered.length) {
       result[subject] = filtered;
     }
     return result;
-  }, {}) : { [subject]: classesData[subject] };
+  }, {}) : (classesData && classesData[subject] ? { [subject]: classesData[subject] } : {});
 
   return (
     <div className="search-bar">
@@ -222,13 +222,13 @@ const SearchBar = ({ username, classesData }) => {
         </button>
         <div className={`dropdown-content ${isDropdownOpen ? 'show' : ''}`}>
           <button onClick={() => setSearchType('All')}>All</button>
-          {Object.keys(classesData).map((subject) => (
+          {classesData && Object.keys(classesData).map((subject) => (
             <button key={subject} onClick={() => setSearchType(subject)}>{subject}</button>
           ))}
         </div>
       </div>
       <div className="search-results">
-        {Object.keys(filteredClasses).map((subject) => (
+        {filteredClasses && Object.keys(filteredClasses).map((subject) => (
           <div key={subject}>
             <h3>{subject}</h3>
             {filteredClasses[subject].map((item, index) => (
