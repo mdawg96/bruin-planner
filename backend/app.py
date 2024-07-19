@@ -2,12 +2,12 @@ from flask import Flask, request, jsonify, send_from_directory
 import os
 from dotenv import load_dotenv
 from db import User, Database
-from flask_cors import CORS
+from flask_cors import CORS  # Import Flask-CORS
 import logging
 import time
 
 app = Flask(__name__, static_folder='../frontend/build', static_url_path='')
-CORS(app, resources={r"/*": {"origins": "https://bruin-planner-fb8f6f96ea51.herokuapp.com"}})
+CORS(app, resources={r"/*": {"origins": "https://bruin-planner-fb8f6f96ea51.herokuapp.com"}})  # Configure CORS
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 # Configure logging
