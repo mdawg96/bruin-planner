@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, make_response
+from flask import Flask, request, jsonify, send_from_directory
 import os
 from dotenv import load_dotenv
 from flask_cors import CORS
@@ -9,16 +9,7 @@ from bson.objectid import ObjectId
 import datetime
 
 app = Flask(__name__, static_folder='../frontend/build', static_url_path='')
-CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
-
-# Ensure CORS headers are in responses
-@app.after_request
-def add_cors_headers(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-    return response
+CORS(app, resources={r"/*": {"origins": "*"}})  # Enable CORS for all routes
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
