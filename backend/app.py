@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, render_template
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import logging
 import os
@@ -6,7 +6,7 @@ import datetime
 from pymongo import MongoClient
 
 app = Flask(__name__, static_folder='../frontend/build', static_url_path='')
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": ["https://bruin-planner-fb8f6f96ea51.herokuapp.com"]}})
 
 # MongoDB setup
 mongo_uri = os.getenv("MONGO_URI", "your_mongo_db_uri")
@@ -17,7 +17,7 @@ registration_attempts_collection = db['registration_attempts']
 
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Origin', 'https://bruin-planner-fb8f6f96ea51.herokuapp.com')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
