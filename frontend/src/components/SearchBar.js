@@ -235,7 +235,7 @@ const SearchBar = ({ username, classesData }) => {
     gridTemplateColumns: `auto repeat(${4 + (customOptions.includes('Year 5') ? 1 : 0)}, 1fr)`,
     gridTemplateRows: `auto repeat(${hasSummerClasses ? 4 : 3}, 1fr)`,
     columnGap: '10px',
-    rowGap: hasSummerClasses ? '5px' : '10px',
+    rowGap: '10px',
     width: 'calc(100% - 220px)',
     height: 'calc(100vh - 80px)',
     marginTop: '40px',
@@ -259,7 +259,7 @@ const SearchBar = ({ username, classesData }) => {
   };
 
   const dropZoneStyle = {
-    height: hasSummerClasses ? '180px' : '235px',
+    height: '180px',
     width: '100%',
     border: '2px dashed black',
     display: 'flex',
@@ -576,7 +576,7 @@ const SearchBar = ({ username, classesData }) => {
                     </div>
                   );
                 }
-                return <div key={zone} style={{ height: '200px' }}></div>;
+                return <div key={zone} style={dropZoneStyle}></div>;
               })}
             </React.Fragment>
           )}
