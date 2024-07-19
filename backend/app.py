@@ -13,6 +13,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
+# Load environment variables
 load_dotenv()
 mongo_uri = os.getenv("MONGO_URI")
 database = Database(mongo_uri)

@@ -21,7 +21,7 @@ class User:
 class Database:
     def __init__(self, uri):
         self.client = MongoClient(uri, server_api=ServerApi('1'))
-        self.db = self.client['cluster0']
+        self.db = self.client['Cluster0']  # Replace with your actual database name
         self.users = self.db['users']
         self.registration_attempts = self.db['registration_attempts']
         logging.debug("Database initialized")
