@@ -22,7 +22,7 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
 
-@app.route('/login/', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login_page():
     try:
         username = request.json['username']
@@ -76,6 +76,14 @@ def update_user_classes():
 
 @app.route('/planner')
 def planner():
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/about')
+def about():
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/login')
+def login():
     return send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/classes.csv')
