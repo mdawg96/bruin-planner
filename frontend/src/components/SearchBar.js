@@ -157,7 +157,9 @@ const SearchBar = ({ username, classesData }) => {
 
   const filteredData = query.length >= 3
     ? getAllClasses().filter(({ item }) => item.toLowerCase().includes(query.toLowerCase()))
-    : getAllClasses();
+    : searchType === 'All'
+    ? getAllClasses()
+    : classesData[subject] ? classesData[subject].map(item => ({ subject, item })) : [];
 
   const listItemStyle = (subject) => ({
     display: 'block',
@@ -418,16 +420,12 @@ const SearchBar = ({ username, classesData }) => {
           <button 
             onClick={() => setSearchType('All')} 
             style={buttonStyle}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3399ff'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#007bff'}
           >
             All
           </button>
           <button 
             onClick={() => setSearchType('Subject')} 
             style={buttonStyle}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3399ff'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#007bff'}
           >
             Subject
           </button>
