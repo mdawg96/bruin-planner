@@ -157,9 +157,7 @@ const SearchBar = ({ username, classesData }) => {
 
   const filteredData = query.length >= 3
     ? getAllClasses().filter(({ item }) => item.toLowerCase().includes(query.toLowerCase()))
-    : query.length === 0
-      ? getAllClasses()
-      : [];
+    : getAllClasses();
 
   const listItemStyle = (subject) => ({
     display: 'block',
@@ -377,13 +375,6 @@ const SearchBar = ({ username, classesData }) => {
     };
   }, [isDragging, handleMouseMove]);
 
-  const handleScroll = (e) => {
-    const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
-    if (scrollTop + clientHeight >= scrollHeight - 10) {
-      setVisibleClasses((prevVisibleClasses) => prevVisibleClasses + 10);
-    }
-  };
-
   if (!classesData || Object.keys(classesData).length === 0) {
     return <div>Loading...</div>;
   }
@@ -459,7 +450,7 @@ const SearchBar = ({ username, classesData }) => {
           placeholder="Search..." 
           style={searchBarStyle}
         />
-        <div style={listContainerStyle} onScroll={handleScroll}>
+        <div style={listContainerStyle}>
           <ul style={{ padding: 0, margin: 0, listStyleType: 'none' }}>
             {filteredData.slice(0, visibleClasses).map((dataItem, index) => {
               const itemText = dataItem.item || dataItem;
@@ -469,7 +460,7 @@ const SearchBar = ({ username, classesData }) => {
               const description = rest ? rest.split(' | ')[1] : '';
               const units = rest ? rest.split(' | ')[0].split(': ')[1] : '';
               const displayName = `${dataItem.subject || subject} - ${className}`;
-              const icon = icons[index % icons.length];  // Cycle through the icons
+              const icon = icons[index % icons.length];
               return (
                 <li 
                   key={index} 
@@ -479,7 +470,7 @@ const SearchBar = ({ username, classesData }) => {
                 >
                   {displayName}
                   <img 
-                    src={icon}  // Display the icon
+                    src={icon} 
                     alt="info" 
                     style={{ width: '20px', height: '20px', cursor: 'pointer', marginLeft: '10px' }}
                     onClick={() => handleInfoClick(index, dataItem.subject || subject, className, units, description)}
@@ -488,6 +479,9 @@ const SearchBar = ({ username, classesData }) => {
               );
             })}
           </ul>
+          {filteredData.length > visibleClasses && (
+            <button onClick={() => setVisibleClasses(visibleClasses + 10)} style={buttonStyle}>Load More</button>
+          )}
         </div>
       </div>
       <div style={gridColumnStyle}>
@@ -498,136 +492,63 @@ const SearchBar = ({ username, classesData }) => {
               {colLabel}
             </div>
           ))}
-          {customOptions.includes('Year 5') && (
-            <div style={{ textAlign: 'center', fontWeight: 'bold' }}>Year 5</div>
-          )}
           {rowLabels.map((rowLabel, rowIndex) => (
             <React.Fragment key={`row-${rowIndex}`}>
-              <div style={{ ...rowLabelStyle, gridRow: `${rowIndex + 2} / span 1` }}>
-                {rowLabel}
-              </div>
+              <div style={rowLabelStyle}>{rowLabel}</div>
               {colLabels.map((colLabel, colIndex) => {
-                const zone = `${rowLabel}-${colLabel}`;
+                const dropZoneKey = `${rowLabel}-${colLabel}`;
                 return (
                   <div
-                    key={zone}
-                    style={dropZoneStyle}
-                    onDragOver={handleDragOverDropZone}
+                    key={`dropzone-${rowIndex}-${colIndex}`}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, dropZoneKey)}
                     onDragLeave={handleDragLeaveDropZone}
-                    onDrop={(e) => handleDrop(e, zone)}
+                    onDragEnter={handleDragOverDropZone}
+                    style={dropZoneStyle}
                   >
-                    {selectedClasses[zone] && selectedClasses[zone].length > 0 ? 
-                      selectedClasses[zone].map((item, index) => (
-                        <div 
-                          key={index} 
-                          style={droppedItemStyle(item.subject)}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, item, zone)}
-                        >
-                          {item.className}
-                        </div>
-                      )) 
-                      : 'Drop items here'}
-                  </div>
-                );
-              })}
-              {customOptions.includes('Year 5') && (
-                <div
-                  key={`${rowLabel}-Year 5`}
-                  style={dropZoneStyle}
-                  onDragOver={handleDragOverDropZone}
-                  onDragLeave={handleDragLeaveDropZone}
-                  onDrop={(e) => handleDrop(e, `${rowLabel}-Year 5`)}
-                >
-                  {selectedClasses[`${rowLabel}-Year 5`] && selectedClasses[`${rowLabel}-Year 5`].length > 0 ? 
-                    selectedClasses[`${rowLabel}-Year 5`].map((item, index) => (
+                    {selectedClasses[dropZoneKey] && selectedClasses[dropZoneKey].map((item, itemIndex) => (
                       <div 
-                        key={index} 
+                        key={itemIndex} 
                         style={droppedItemStyle(item.subject)}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, item, `${rowLabel}-Year 5`)}
                       >
                         {item.className}
                       </div>
-                    )) 
-                    : 'Drop items here'}
-                </div>
-              )}
-            </React.Fragment>
-          ))}
-          {customOptions.some(option => option.includes('Summer')) && (
-            <React.Fragment>
-              <div style={{ ...rowLabelStyle, gridRow: `${rowLabels.length + 2} / span 1` }}>
-                Summer
-              </div>
-              {colLabels.map((colLabel, colIndex) => {
-                const zone = `Summer-${colIndex + 1}`;
-                if (customOptions.includes(`Year ${colIndex + 1} Summer`)) {
-                  return (
-                    <div
-                      key={zone}
-                      style={dropZoneStyle}
-                      onDragOver={handleDragOverDropZone}
-                      onDragLeave={handleDragLeaveDropZone}
-                      onDrop={(e) => handleDrop(e, zone)}
-                    >
-                      {selectedClasses[zone] && selectedClasses[zone].length > 0 ? 
-                        selectedClasses[zone].map((item, index) => (
-                          <div 
-                            key={index} 
-                            style={droppedItemStyle(item.subject)}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, item, zone)}
-                          >
-                            {item.className}
-                          </div>
-                        )) 
-                        : 'Drop items here'}
-                    </div>
-                  );
-                }
-                return <div key={zone} style={dropZoneStyle}></div>;
+                    ))}
+                  </div>
+                );
               })}
             </React.Fragment>
-          )}
+          ))}
         </div>
       </div>
-      {isDropdownOpen && renderCustomDropdown()}
-      <button 
-        style={{ position: 'absolute', bottom: '20px', right: '20px', padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3399ff'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#007bff'}
-      >
-        Customize
-      </button>
       {showInfo !== null && (
         <div
           style={{
-            position: 'absolute',
-            top: `${infoBoxPosition.top}px`,
-            left: `${infoBoxPosition.left}px`,
-            padding: '20px',
-            width: '400px',
+            position: 'fixed',
+            top: infoBoxPosition.top,
+            left: infoBoxPosition.left,
             backgroundColor: 'white',
             border: '1px solid #ccc',
-            borderRadius: '10px',
+            borderRadius: '5px',
             boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
             zIndex: 1000,
-            cursor: 'move',
+            padding: '10px',
           }}
           onMouseDown={handleMouseDown}
         >
-          <p><strong>Subject:</strong> {infoContent.subject}</p>
-          <p><strong>Class Name:</strong> {infoContent.className}</p>
-          <p><strong>Units:</strong> {infoContent.units}</p>
-          <p><strong>Description:</strong> {infoContent.description}</p>
-          <button onClick={closeInfoBox}>Close</button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Class Info</span>
+            <button onClick={closeInfoBox} style={{ cursor: 'pointer', border: 'none', backgroundColor: 'transparent', fontSize: '1.2em' }}>&times;</button>
+          </div>
+          <div><strong>Subject:</strong> {infoContent.subject}</div>
+          <div><strong>Class:</strong> {infoContent.className}</div>
+          <div><strong>Units:</strong> {infoContent.units}</div>
+          <div><strong>Description:</strong> {infoContent.description}</div>
         </div>
       )}
+      {isDropdownOpen && renderCustomDropdown()}
     </div>
   );
 };
 
 export default SearchBar;
- 
