@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import debounce from 'lodash.debounce';
 import TerryIcon from './terry.png';
 import JzIcon from './jz.png';
 import PjIcon from './pj.png';
@@ -39,6 +40,7 @@ const SearchBar = ({ username, classesData }) => {
   const [customOptions, setCustomOptions] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [visibleClasses, setVisibleClasses] = useState(10);
+  const [filteredResults, setFilteredResults] = useState([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -47,9 +49,7 @@ const SearchBar = ({ username, classesData }) => {
         return;
       }
       try {
-        console.log('Fetching user data for:', storedUsername);
         const response = await axios.post('https://bruin-planner-fb8f6f96ea51.herokuapp.com/getUserClasses/', { username: storedUsername });
-        console.log('User data response:', response.data);
         if (response.data) {
           const data = response.data;
           if (data.selected_classes) {
@@ -81,8 +81,28 @@ const SearchBar = ({ username, classesData }) => {
     setQuery(e.target.value);
   };
 
+  const debouncedSearch = useCallback(
+    debounce((query, subject, searchType) => {
+      let filtered;
+      if (query.length >= 3) {
+        filtered = searchType === 'All'
+          ? getAllClasses().filter(({ item }) => item.toLowerCase().includes(query.toLowerCase()))
+          : classesData[subject].filter(item => item.toLowerCase().includes(query.toLowerCase())).map(item => ({ subject, item }));
+      } else {
+        filtered = searchType === 'All'
+          ? getAllClasses()
+          : classesData[subject].map(item => ({ subject, item }));
+      }
+      setFilteredResults(filtered);
+    }, 300),
+    [classesData]
+  );
+
+  useEffect(() => {
+    debouncedSearch(query, subject, searchType);
+  }, [query, subject, searchType, debouncedSearch]);
+
   const handleDragStart = (e, item, fromZone = null) => {
-    console.log('Drag start:', item, 'from zone:', fromZone);
     setDraggedItem(item);
     setDraggedFromZone(fromZone);
     setIsDraggingOut(false);
@@ -95,7 +115,6 @@ const SearchBar = ({ username, classesData }) => {
   const handleDrop = async (e, toZone) => {
     e.preventDefault();
     if (draggedItem) {
-      console.log('Dropping item:', draggedItem, 'to zone:', toZone);
       const updatedSelectedClasses = { ...selectedClasses };
       if (draggedFromZone) {
         updatedSelectedClasses[draggedFromZone] = updatedSelectedClasses[draggedFromZone].filter(item => item !== draggedItem);
@@ -107,8 +126,7 @@ const SearchBar = ({ username, classesData }) => {
       setSelectedClasses(updatedSelectedClasses);
       setDraggedFromZone(null);
       try {
-        const response = await axios.post('https://bruin-planner-fb8f6f96ea51.herokuapp.com/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
-        console.log('Update user classes response:', response.data);
+        await axios.post('https://bruin-planner-fb8f6f96ea51.herokuapp.com/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
       } catch (error) {
         console.error('Error updating selected classes:', error);
       }
@@ -128,7 +146,6 @@ const SearchBar = ({ username, classesData }) => {
   const handleDropOutside = async (e) => {
     e.preventDefault();
     if (isDraggingOut && draggedItem) {
-      console.log('Dropping item outside:', draggedItem);
       const updatedSelectedClasses = { ...selectedClasses };
       Object.keys(updatedSelectedClasses).forEach(zoneKey => {
         if (!Array.isArray(updatedSelectedClasses[zoneKey])) {
@@ -139,10 +156,9 @@ const SearchBar = ({ username, classesData }) => {
       setSelectedClasses(updatedSelectedClasses);
       setDraggedFromZone(null);
       try {
-        const response = await axios.post('https://bruin-planner-fb8f6f96ea51.herokuapp.com/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
-        console.log('Update user classes after dropping outside response:', response.data);
+        await axios.post('https://bruin-planner-fb8f6f96ea51.herokuapp.com/updateUserClasses/', { username, selected_classes: updatedSelectedClasses, custom_options: customOptions });
       } catch (error) {
-        console.error('Error updating selected classes after dropping outside:', error);
+        console.error('Error updating selected classes:', error);
       }
     }
   };
@@ -154,12 +170,6 @@ const SearchBar = ({ username, classesData }) => {
     });
     return allClasses;
   };
-
-  const filteredData = query.length >= 3
-    ? getAllClasses().filter(({ item }) => item.toLowerCase().includes(query.toLowerCase()))
-    : searchType === 'All'
-    ? getAllClasses()
-    : classesData[subject] ? classesData[subject].map(item => ({ subject, item })) : [];
 
   const listItemStyle = (subject) => ({
     display: 'block',
@@ -356,8 +366,7 @@ const SearchBar = ({ username, classesData }) => {
     });
 
     try {
-      const response = await axios.post('https://bruin-planner-fb8f6f96ea51.herokuapp.com/updateUserClasses/', { username, selected_classes: selectedClasses, custom_options: updatedOptions });
-      console.log('Update custom options response:', response.data);
+      await axios.post('https://bruin-planner-fb8f6f96ea51.herokuapp.com/updateUserClasses/', { username, selected_classes: selectedClasses, custom_options: updatedOptions });
     } catch (error) {
       console.error('Error updating custom options:', error);
     }
@@ -454,7 +463,7 @@ const SearchBar = ({ username, classesData }) => {
         />
         <div style={listContainerStyle}>
           <ul style={{ padding: 0, margin: 0, listStyleType: 'none' }}>
-            {filteredData.slice(0, visibleClasses).map((dataItem, index) => {
+            {filteredResults.slice(0, visibleClasses).map((dataItem, index) => {
               const itemText = dataItem.item || dataItem;
               if (!itemText) return null;
 
@@ -481,7 +490,7 @@ const SearchBar = ({ username, classesData }) => {
               );
             })}
           </ul>
-          {filteredData.length > visibleClasses && (
+          {filteredResults.length > visibleClasses && (
             <button onClick={() => setVisibleClasses(visibleClasses + 10)} style={buttonStyle}>Load More</button>
           )}
         </div>
