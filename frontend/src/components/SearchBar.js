@@ -155,11 +155,14 @@ const SearchBar = ({ username, classesData }) => {
     return allClasses;
   };
 
-  const filteredData = query.length >= 3
-    ? getAllClasses().filter(({ item }) => item.toLowerCase().includes(query.toLowerCase()))
-    : searchType === 'Subject'
-      ? (classesData[subject] || []).map(item => ({ subject, item }))
-      : getAllClasses();
+  const filteredData = getAllClasses().filter(({ item, subject: classSubject }) => {
+    if (query.length >= 3) {
+      return item.toLowerCase().includes(query.toLowerCase());
+    } else if (searchType === 'Subject' && subject) {
+      return classSubject === subject;
+    }
+    return true;
+  });
 
   const listItemStyle = (subject) => ({
     display: 'block',
