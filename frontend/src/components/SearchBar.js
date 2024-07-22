@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import TerryIcon from './terry.png';
-import JzIcon from './jz.png';
-import PjIcon from './pj.png';
-
-const icons = [TerryIcon, JzIcon, PjIcon];
+import Papa from 'papaparse';
 
 const generateColor = (() => {
   const subjectColorMap = {};
@@ -154,9 +150,9 @@ const SearchBar = ({ username, classesData }) => {
     return allClasses;
   };
 
-  const filteredData = searchType === 'All'
+  const filteredData = query.length >= 3
     ? getAllClasses().filter(({ item }) => item.toLowerCase().includes(query.toLowerCase()))
-    : (subject ? classesData[subject] : []).filter(item => item.toLowerCase().includes(query.toLowerCase()));
+    : [];
 
   const listItemStyle = (subject) => ({
     display: 'block',
@@ -459,7 +455,6 @@ const SearchBar = ({ username, classesData }) => {
               const description = rest ? rest.split(' | ')[1] : '';
               const units = rest ? rest.split(' | ')[0].split(': ')[1] : '';
               const displayName = `${dataItem.subject || subject} - ${className}`;
-              const icon = icons[index % icons.length];
               return (
                 <li 
                   key={index} 
@@ -469,7 +464,7 @@ const SearchBar = ({ username, classesData }) => {
                 >
                   {displayName}
                   <img 
-                    src={icon} 
+                    src={'info_icon.png'} 
                     alt="info" 
                     style={{ width: '20px', height: '20px', cursor: 'pointer', marginLeft: '10px' }}
                     onClick={() => handleInfoClick(index, dataItem.subject || subject, className, units, description)}
