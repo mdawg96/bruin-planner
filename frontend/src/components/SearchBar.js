@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import Papa from 'papaparse';
+import TerryIcon from './terry.png';  // Import the images
+import JzIcon from './jz.png';
+import PjIcon from './pj.png';
+
+const icons = [TerryIcon, JzIcon, PjIcon];
 
 const generateColor = (() => {
   const subjectColorMap = {};
@@ -34,6 +38,7 @@ const SearchBar = ({ username, classesData }) => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [customOptions, setCustomOptions] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [visibleClasses, setVisibleClasses] = useState(10);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -152,7 +157,9 @@ const SearchBar = ({ username, classesData }) => {
 
   const filteredData = query.length >= 3
     ? getAllClasses().filter(({ item }) => item.toLowerCase().includes(query.toLowerCase()))
-    : [];
+    : query.length === 0
+      ? getAllClasses()
+      : [];
 
   const listItemStyle = (subject) => ({
     display: 'block',
@@ -370,6 +377,13 @@ const SearchBar = ({ username, classesData }) => {
     };
   }, [isDragging, handleMouseMove]);
 
+  const handleScroll = (e) => {
+    const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
+    if (scrollTop + clientHeight >= scrollHeight - 10) {
+      setVisibleClasses((prevVisibleClasses) => prevVisibleClasses + 10);
+    }
+  };
+
   if (!classesData || Object.keys(classesData).length === 0) {
     return <div>Loading...</div>;
   }
@@ -445,9 +459,9 @@ const SearchBar = ({ username, classesData }) => {
           placeholder="Search..." 
           style={searchBarStyle}
         />
-        <div style={listContainerStyle}>
+        <div style={listContainerStyle} onScroll={handleScroll}>
           <ul style={{ padding: 0, margin: 0, listStyleType: 'none' }}>
-            {filteredData.map((dataItem, index) => {
+            {filteredData.slice(0, visibleClasses).map((dataItem, index) => {
               const itemText = dataItem.item || dataItem;
               if (!itemText) return null;
 
@@ -455,6 +469,7 @@ const SearchBar = ({ username, classesData }) => {
               const description = rest ? rest.split(' | ')[1] : '';
               const units = rest ? rest.split(' | ')[0].split(': ')[1] : '';
               const displayName = `${dataItem.subject || subject} - ${className}`;
+              const icon = icons[index % icons.length];  // Cycle through the icons
               return (
                 <li 
                   key={index} 
@@ -464,7 +479,7 @@ const SearchBar = ({ username, classesData }) => {
                 >
                   {displayName}
                   <img 
-                    src={'info_icon.png'} 
+                    src={icon}  // Display the icon
                     alt="info" 
                     style={{ width: '20px', height: '20px', cursor: 'pointer', marginLeft: '10px' }}
                     onClick={() => handleInfoClick(index, dataItem.subject || subject, className, units, description)}
@@ -615,3 +630,4 @@ const SearchBar = ({ username, classesData }) => {
 };
 
 export default SearchBar;
+ 
