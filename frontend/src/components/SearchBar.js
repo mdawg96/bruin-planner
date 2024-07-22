@@ -418,12 +418,16 @@ const SearchBar = ({ username, classesData }) => {
           <button 
             onClick={() => setSearchType('All')} 
             style={buttonStyle}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3399ff'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#007bff'}
           >
             All
           </button>
           <button 
             onClick={() => setSearchType('Subject')} 
             style={buttonStyle}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#3399ff'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#007bff'}
           >
             Subject
           </button>

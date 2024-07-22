@@ -28,6 +28,10 @@ const Login = ({ setUsername }) => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long.');
+      return;
+    }
     try {
       const response = await axios.post('https://bruin-planner-fb8f6f96ea51.herokuapp.com/create_an_account/', { username, password }, {
         headers: {
@@ -189,6 +193,8 @@ const Login = ({ setUsername }) => {
             type="button"
             onClick={isRegister ? toggleToLogin : toggleToRegister}
             style={toggleButtonStyle}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#bbb'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ccc'}
           >
             {isRegister ? 'Go to Login' : 'Register an Account'}
           </button>
